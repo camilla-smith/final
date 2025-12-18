@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Santa’s Elf Buffet Orders</title>
+  <style>
+    :root{
+      --bg:#d8d2cf;
+      --wall:#d9d4d1;
+      --floor:#3f3a40;
+      --table:#ffffff;
+      --table-edge:#e46b6b;
+      --wood:#7a5343;
+      --darkwood:#5e3f34;
+      --green:#1b7d4b;
+      --red:#d94b4b;
+      --gold:#f3c36a;
+      --ink:#1b1b1b;
+      --shadow: rgba(0,0,0,.18);
+      --ui: rgba(255,255,255,.88);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(circle at 20% 10%, #efe9e6, var(--bg));
+      color:#1b1b1b;
+      overflow:hidden;
+    }
+
+    /* ====== SCENE ====== */
+    .game{
+      width:100vw; height:100vh;
+      position:relative;
+    }
+    .wall{
+      position:absolute; inset:0 0 28vh 0;
+      background: linear-gradient(#ded8d5, #d3cdca);
+    }
+    .floor{
+      position:absolute; left:0; right:0; bottom:0; height:28vh;
+      background: linear-gradient(#4a4450, var(--floor));
+    }
+
+    /* Tree */
+    .tree{
+      position:absolute; left:4vw; top:10vh;
+      width:18vw; min-width:180px; max-width:280px;
+      aspect-ratio: 3/4;
+      filter: drop-shadow(0 14px 18px var(--shadow));
+      animation: sway 4.2s ease-in-out infinite;
+      transform-origin: 50% 90%;
+    }
+    @keyframes sway{
+      0%,100%{transform: rotate(-1.2deg)}
+      50%{transform: rotate(1.4deg)}
+    }
+    .tree svg{width:100%; height:100%}
+
+    /* Fireplace / mantle */
+    .mantle{
+      position:absolute; right:7vw; top:14vh;
+      width:26vw; min-width:260px; max-width:430px;
+      height:20vh; min-height:150px;
+      filter: drop-shadow(0 14px 18px var(--shadow));
+    }
+    .mantle .top{
+      height:26%;
+      background: #faf7f6;
+      border-radius: 16px 16px 10px 10px;
+      border: 4px solid rgba(0,0,0,.06);
+      position:relative;
+    }
+    .mantle .top:before{
+      content:"";
+      position:absolute; left:10%; top:-18px;
+      width:80%; height:32px;
+      background: rgba(255,255,255,.35);
+      border-radius: 999px;
+      filter: blur(0.2px);
+    }
+    .mantle .firebox{
+      height:74%;
+      background: #2d2432;
+      border-radius: 10px;
+      border: 5px solid rgba(255,255,255,.18);
+      position:relative;
+      overflow:hidden;
+    }
+    .flame{
+      position:absolute; bottom:-10px; left:50%;
+      width:60%; height:70%;
+      transform: translateX(-50%);
+      background: radial-gradient(circle at 50% 70%, #ffd27a, #ff7a59 55%, rgba(255,122,89,0) 70%);
+      border-radius: 50% 50% 45% 45%;
+      opacity:.95;
+      animation: flame 1.1s ease-in-out infinite;
+      filter: blur(0.2px);
+    }
+    @keyframes flame{
+      0%,100%{transform: translateX(-50%) scale(1) skewX(-1deg)}
+      50%{transform: translateX(-50%) scale(1.08) skewX(1deg)}
+    }
+    .stockings{
+      position:absolute; inset:auto 0 -18px 0;
+      display:flex; justify-content:space-around;
+      padding:0 10px;
+      pointer-events:none;
+    }
+    .stocking{
+      width:42px; height:58px; border-radius: 10px 10px 16px 16px;
+      background: linear-gradient(#ff6b6b,#d63b3b);
+      position:relative;
+      transform: rotate(-7deg);
+      filter: drop-shadow(0 6px 8px rgba(0,0,0,.25));
+    }
+    .stocking:before{
+      content:"";
+      position:absolute; top:-12px; left:0; right:0; height:16px;
+      background:#fff;
+      border-radius: 10px 10px 6px 6px;
+    }
+    .stocking:nth-child(2){transform: rotate(6deg)}
+    .stocking:nth-child(3){transform: rotate(-2deg)}
+    .stocking:nth-child(4){transform: rotate(8deg)}
+
+    /* Lights */
+    .lights{
+      position:absolute; left:0; right:0; top:0;
+      height:64px;
+      display:flex; gap:18px;
+      justify-content:center; align-items:flex-end;
+      padding-bottom:10px;
+      pointer-events:none;
+      opacity:.85;
+    }
+    .bulb{
+      width:14px; height:18px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #fff, #ffe07a 40%, #f5b642 70%);
+      box-shadow: 0 0 18px rgba(255,220,120,.65);
+      animation: twinkle 1.6s infinite;
+    }
+    .bulb:nth-child(3n){background: radial-gradient(circle at 30% 30%, #fff, #9fffcf 40%, #2fbf71 70%); box-shadow:0 0 18px rgba(120,255,200,.55)}
+    .bulb:nth-child(4n){background: radial-gradient(circle at 30% 30%, #fff, #ffb1b1 40%, #d94b4b 70%); box-shadow:0 0 18px rgba(255,120,120,.55)}
+    .bulb:nth-child(5n){background: radial-gradient(circle at 30% 30%, #fff, #b8d4ff 40%, #4b7bd9 70%); box-shadow:0 0 18px rgba(120,170,255,.55)}
+    @keyframes twinkle{
+      0%,100%{transform: translateY(0); filter: brightness(1)}
+      50%{transform: translateY(-2px); filter: brightness(1.3)}
+    }
+
+    /* Snow */
+    .snow{
+      position:absolute; inset:0;
+      pointer-events:none;
+      opacity:.55;
+    }
+    .flake{
+      position:absolute;
+      top:-10px;
+      width:6px; height:6px;
+      background: rgba(255,255,255,.9);
+      border-radius: 50%;
+      filter: blur(.2px);
+      animation: fall linear infinite;
+    }
+    @keyframes fall{
+      to{ transform: translateY(110vh) translateX(40px); }
+    }
+
+    /* ====== TABLE ====== */
+    .tableWrap{
+      position:absolute;
+      left:50%;
+      top:48vh;
+      transform: translateX(-50%);
+      width:min(820px, 84vw);
+      height:30vh;
+      min-height:220px;
+      pointer-events:none;
+    }
+    .table{
+      position:absolute;
+      left:50%; top:18%;
+      transform: translateX(-50%);
+      width:100%; height:72%;
+      background: var(--table);
+      border-radius: 16px;
+      box-shadow: 0 18px 30px var(--shadow);
+      border: 5px solid rgba(0,0,0,.05);
+      overflow:hidden;
+      pointer-events:auto;
+    }
+    .table:after{
+      content:"";
+      position:absolute; left:0; right:0; bottom:18%;
+      height:10px;
+      background: var(--table-edge);
+      opacity:.9;
+    }
+    .table .items{
+      position:absolute; inset:14px 18px 32px 18px;
+      display:flex;
+      gap:14px;
+      justify-content:space-evenly;
+      align-items:center;
+    }
+    .item{
+      width:180px; max-width:30%;
+      background: rgba(255,255,255,.8);
+      border: 2px dashed rgba(0,0,0,.12);
+      border-radius: 18px;
+      padding:10px 10px 12px;
+      text-align:center;
+      cursor: grab;
+      user-select:none;
+      touch-action:none;
+      box-shadow: 0 10px 18px rgba(0,0,0,.08);
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    .item:active{cursor:grabbing}
+    .item:hover{transform: translateY(-2px); box-shadow: 0 14px 22px rgba(0,0,0,.12)}
+    .item .icon{
+      font-size:44px;
+      line-height:1;
+      margin-top:2px;
+      display:inline-block;
+      filter: drop-shadow(0 6px 8px rgba(0,0,0,.12));
+    }
+    .item .label{
+      margin-top:6px;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    .item .hint{
+      font-size:12px;
+      opacity:.7;
+      margin-top:2px;
+    }
+
+    /* ====== ELVES ====== */
+    .elves{
+      position:absolute;
+      left:50%;
+      bottom:5vh;
+      transform: translateX(-50%);
+      width:min(980px, 92vw);
+      display:flex;
+      justify-content:space-between;
+      gap:18px;
+      padding:0 6px;
+    }
+    .elfSlot{
+      width:32%;
+      min-width:200px;
+      position:relative;
+    }
+    .elf{
+      width:100%;
+      height:180px;
+      border-radius: 24px;
+      background: rgba(255,255,255,.14);
+      border: 2px solid rgba(255,255,255,.18);
+      box-shadow: 0 18px 30px rgba(0,0,0,.18);
+      backdrop-filter: blur(2px);
+      position:relative;
+      overflow:hidden;
+    }
+    .elf::before{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,.18), rgba(255,255,255,0) 55%);
+      pointer-events:none;
+    }
+    .elfBody{
+      position:absolute; inset:0;
+      display:grid;
+      place-items:center;
+      transform-origin: 50% 85%;
+      animation: bob 1.8s ease-in-out infinite;
+    }
+    .elfSlot:nth-child(2) .elfBody{animation-duration: 2.1s}
+    .elfSlot:nth-child(3) .elfBody{animation-duration: 1.6s}
+    @keyframes bob{
+      0%,100%{transform: translateY(0)}
+      50%{transform: translateY(-6px)}
+    }
+
+    .elfArt{
+      width:120px; height:140px;
+      position:relative;
+      filter: drop-shadow(0 10px 12px rgba(0,0,0,.18));
+    }
+    .hat{
+      position:absolute; left:16px; top:0;
+      width:88px; height:56px;
+      background: linear-gradient(#2fbf71, #1b7d4b);
+      border-radius: 18px 18px 30px 30px;
+      transform: rotate(-10deg);
+    }
+    .hat:after{
+      content:"";
+      position:absolute; right:-14px; top:14px;
+      width:18px; height:18px;
+      border-radius:50%;
+      background: #ffe9e9;
+      box-shadow: 0 0 0 4px rgba(255,255,255,.4) inset;
+    }
+    .face{
+      position:absolute; left:16px; top:42px;
+      width:88px; height:78px;
+      background: #ffd7c2;
+      border-radius: 26px;
+    }
+    .cheek{
+      position:absolute; width:14px; height:10px; border-radius:50%;
+      background: rgba(255,120,120,.45);
+      top:52px;
+    }
+    .cheek.left{left:26px}
+    .cheek.right{right:26px}
+    .eyes{
+      position:absolute; left:0; right:0; top:50px;
+      display:flex; justify-content:center; gap:18px;
+    }
+    .eye{
+      width:8px; height:10px; border-radius: 50%;
+      background:#2a1c1c;
+    }
+    .smile{
+      position:absolute; left:50%; top:68px;
+      width:22px; height:10px;
+      border: 3px solid rgba(0,0,0,.55);
+      border-top:0; border-left:0; border-right:0;
+      transform: translateX(-50%);
+      border-radius: 0 0 18px 18px;
+      opacity:.7;
+    }
+    .body{
+      position:absolute; left:10px; top:94px;
+      width:100px; height:46px;
+      background: linear-gradient(#ff6b6b, #d94b4b);
+      border-radius: 18px;
+      border: 3px solid rgba(255,255,255,.25);
+    }
+    .belt{
+      position:absolute; left:10px; top:115px;
+      width:100px; height:12px;
+      background:#2d2432;
+      border-radius: 8px;
+      opacity:.9;
+    }
+    .buckle{
+      position:absolute; left:50%; top:113px;
+      width:18px; height:16px;
+      border: 3px solid #f3c36a;
+      transform: translateX(-50%);
+      border-radius: 4px;
+    }
+
+    /* Speech bubble */
+    .bubble{
+      position:absolute;
+      left:50%;
+      top:-48px;
+      transform: translateX(-50%);
+      background: var(--ui);
+      border-radius: 16px;
+      padding:8px 12px;
+      display:flex; align-items:center; gap:10px;
+      box-shadow: 0 14px 22px rgba(0,0,0,.18);
+      border: 2px solid rgba(0,0,0,.08);
+      min-width: 190px;
+      justify-content:space-between;
+    }
+    .bubble:after{
+      content:"";
+      position:absolute;
+      left:50%;
+      bottom:-10px;
+      transform: translateX(-50%);
+      border-width: 10px 10px 0 10px;
+      border-style: solid;
+      border-color: var(--ui) transparent transparent transparent;
+      filter: drop-shadow(0 4px 2px rgba(0,0,0,.08));
+    }
+    .bubble .want{
+      display:flex; align-items:center; gap:8px;
+      font-weight:900;
+    }
+    .bubble .want .wantIcon{font-size:22px}
+    .bubble .timerRing{
+      width:42px; height:42px;
+      border-radius: 50%;
+      background: conic-gradient(var(--green) 0deg, rgba(0,0,0,.12) 0deg);
+      display:grid; place-items:center;
+      border:2px solid rgba(0,0,0,.08);
+    }
+    .bubble .timerRing span{
+      font-size:11px;
+      font-weight:900;
+      opacity:.85;
+    }
+
+    .dropHint{
+      position:absolute; bottom:10px; left:50%;
+      transform: translateX(-50%);
+      font-size:12px;
+      opacity:.72;
+      background: rgba(255,255,255,.2);
+      padding:6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      pointer-events:none;
+    }
+
+    .elf.good{outline: 4px solid rgba(47,191,113,.45)}
+    .elf.bad{outline: 4px solid rgba(217,75,75,.45)}
+
+    /* ====== UI HUD ====== */
+    .hud{
+      position:absolute; left:16px; top:16px;
+      background: rgba(255,255,255,.88);
+      border: 2px solid rgba(0,0,0,.08);
+      border-radius: 18px;
+      padding:12px 14px;
+      display:flex; gap:14px;
+      align-items:center;
+      box-shadow: 0 16px 24px rgba(0,0,0,.16);
+      min-width: 320px;
+    }
+    .hud .stat{
+      display:flex; flex-direction:column;
+      gap:2px;
+      min-width: 88px;
+    }
+    .hud .label{font-size:12px; opacity:.7; font-weight:800}
+    .hud .value{font-size:18px; font-weight:1000; letter-spacing:.2px}
+    .cookies{
+      display:flex; gap:6px; align-items:center;
+      padding-left:6px;
+      border-left: 2px solid rgba(0,0,0,.08);
+    }
+    .cookie{
+      font-size:18px;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,.12));
+      opacity:1;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .cookie.lost{opacity:.18; transform: scale(.9)}
+    .btn{
+      margin-left:auto;
+      background: linear-gradient(#ffffff, #f2f2f2);
+      border: 2px solid rgba(0,0,0,.10);
+      border-radius: 14px;
+      padding:8px 10px;
+      font-weight:900;
+      cursor:pointer;
+      transition: transform .12s ease;
+    }
+    .btn:hover{transform: translateY(-1px)}
+    .btn:active{transform: translateY(0px) scale(.98)}
+
+    /* ====== MODAL ====== */
+    .modal{
+      position:absolute; inset:0;
+      display:none;
+      place-items:center;
+      background: rgba(0,0,0,.35);
+      backdrop-filter: blur(2px);
+    }
+    .modal.show{display:grid}
+    .card{
+      width:min(560px, 92vw);
+      background: rgba(255,255,255,.92);
+      border-radius: 24px;
+      padding:18px 18px 16px;
+      box-shadow: 0 26px 50px rgba(0,0,0,.28);
+      border: 2px solid rgba(0,0,0,.10);
+      text-align:center;
+    }
+    .card h2{margin:6px 0 6px; font-size:26px}
+    .card p{margin:6px 0 12px; opacity:.8}
+    .card .big{
+      font-size:18px;
+      font-weight:1000;
+      letter-spacing:.2px;
+      margin:10px 0 14px;
+    }
+    .card .row{
+      display:flex; justify-content:center; gap:12px; flex-wrap:wrap;
+      margin:10px 0 4px;
+    }
+    .pill{
+      background: rgba(0,0,0,.06);
+      border: 1px solid rgba(0,0,0,.08);
+      border-radius: 999px;
+      padding:8px 12px;
+      font-weight:900;
+    }
+
+    /* Mobile note */
+    .mobileNote{
+      position:absolute; right:16px; top:16px;
+      background: rgba(255,255,255,.78);
+      border: 2px solid rgba(0,0,0,.08);
+      border-radius: 16px;
+      padding:10px 12px;
+      width: min(320px, 40vw);
+      box-shadow: 0 16px 24px rgba(0,0,0,.14);
+      font-size:12px;
+      opacity:.85;
+    }
+    @media (max-width: 760px){
+      .tableWrap{top:44vh}
+      .hud{min-width: 280px}
+      .mobileNote{display:none}
+      .elves{gap:10px}
+      .elf{height:160px}
+      .bubble{min-width:170px}
+      .item{width:150px}
+    }
+  </style>
+</head>
+<body>
+<div class="game" id="game">
+
+  <div class="wall"></div>
+  <div class="floor"></div>
+
+  <div class="lights" aria-hidden="true">
+    <div class="bulb" style="animation-delay:.0s"></div>
+    <div class="bulb" style="animation-delay:.2s"></div>
+    <div class="bulb" style="animation-delay:.4s"></div>
+    <div class="bulb" style="animation-delay:.1s"></div>
+    <div class="bulb" style="animation-delay:.3s"></div>
+    <div class="bulb" style="animation-delay:.5s"></div>
+    <div class="bulb" style="animation-delay:.15s"></div>
+    <div class="bulb" style="animation-delay:.35s"></div>
+    <div class="bulb" style="animation-delay:.55s"></div>
+  </div>
+
+  <div class="snow" id="snow" aria-hidden="true"></div>
+
+  <!-- Tree (inline SVG so no external images needed) -->
+  <div class="tree" aria-hidden="true">
+    <svg viewBox="0 0 220 280">
+      <defs>
+        <linearGradient id="gTree" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stop-color="#2fbf71"/>
+          <stop offset="1" stop-color="#1b7d4b"/>
+        </linearGradient>
+      </defs>
+      <polygon points="110,18 40,110 78,110 30,175 78,175 40,240 180,240 142,175 190,175 142,110 180,110"
+               fill="url(#gTree)" stroke="rgba(255,255,255,.18)" stroke-width="6" stroke-linejoin="round"/>
+      <rect x="92" y="230" width="36" height="40" rx="10" fill="#7a5343"/>
+      <!-- garland -->
+      <path d="M55 118 C85 140, 135 140, 165 118" fill="none" stroke="#f3c36a" stroke-width="7" stroke-linecap="round" opacity=".9"/>
+      <path d="M55 180 C85 202, 135 202, 165 180" fill="none" stroke="#f3c36a" stroke-width="7" stroke-linecap="round" opacity=".9"/>
+      <!-- ornaments -->
+      <circle cx="78" cy="132" r="10" fill="#d94b4b"/>
+      <circle cx="142" cy="132" r="10" fill="#ffffff" opacity=".9"/>
+      <circle cx="110" cy="166" r="10" fill="#f3c36a"/>
+      <circle cx="78" cy="198" r="10" fill="#ffffff" opacity=".9"/>
+      <circle cx="142" cy="198" r="10" fill="#d94b4b"/>
+      <!-- star -->
+      <polygon points="110,2 118,20 138,20 122,32 128,50 110,40 92,50 98,32 82,20 102,20"
+               fill="#f3c36a" stroke="rgba(255,255,255,.5)" stroke-width="3" />
+    </svg>
+  </div>
+
+  <!-- Fireplace -->
+  <div class="mantle" aria-hidden="true">
+    <div class="top">
+      <div class="stockings">
+        <div class="stocking"></div>
+        <div class="stocking"></div>
+        <div class="stocking"></div>
+        <div class="stocking"></div>
+      </div>
+    </div>
+    <div class="firebox">
+      <div class="flame"></div>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="stat">
+      <div class="label">Day Timer</div>
+      <div class="value"><span id="dayTime">60</span>s</div>
+    </div>
+    <div class="stat">
+      <div class="label">Score</div>
+      <div class="value" id="score">0</div>
+    </div>
+    <div class="cookies" title="Cookie Rating (drops if you take too long)">
+      <span style="font-weight:1000; opacity:.8; margin-right:6px;">Cookies</span>
+      <span class="cookie" id="c1">🍪</span>
+      <span class="cookie" id="c2">🍪</span>
+      <span class="cookie" id="c3">🍪</span>
+      <span class="cookie" id="c4">🍪</span>
+      <span class="cookie" id="c5">🍪</span>
+    </div>
+    <button class="btn" id="restartBtn" type="button">New Day ↻</button>
+  </div>
+
+  <div class="mobileNote">
+    <b>Tip:</b> Drag a present from the table onto the elf who asked for it.
+    Don’t take too long or your 🍪 rating drops!
+  </div>
+
+  <!-- Table with draggable presents -->
+  <div class="tableWrap">
+    <div class="table" id="table">
+      <div class="items">
+        <div class="item" draggable="true" data-toy="doll" id="toy-doll">
+          <div class="icon">🪆</div>
+          <div class="label">Doll</div>
+          <div class="hint">Drag to an elf</div>
+        </div>
+        <div class="item" draggable="true" data-toy="horse" id="toy-horse">
+          <div class="icon">🦄</div>
+          <div class="label">Rocking Horse</div>
+          <div class="hint">Drag to an elf</div>
+        </div>
+        <div class="item" draggable="true" data-toy="car" id="toy-car">
+          <div class="icon">🚗</div>
+          <div class="label">Toy Car</div>
+          <div class="hint">Drag to an elf</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Elves -->
+  <div class="elves">
+    <div class="elfSlot">
+      <div class="bubble" id="bubble0">
+        <div class="want"><span class="wantIcon" id="wantIcon0">🪆</span><span id="wantText0">Doll</span></div>
+        <div class="timerRing" id="ring0"><span id="secs0">6</span></div>
+      </div>
+      <div class="elf" id="elf0" data-elf="0">
+        <div class="elfBody">
+          <div class="elfArt">
+            <div class="hat"></div>
+            <div class="face"></div>
+            <div class="cheek left"></div>
+            <div class="cheek right"></div>
+            <div class="eyes"><div class="eye"></div><div class="eye"></div></div>
+            <div class="smile"></div>
+            <div class="body"></div>
+            <div class="belt"></div>
+            <div class="buckle"></div>
+          </div>
+        </div>
+        <div class="dropHint">Drop present here</div>
+      </div>
+    </div>
+
+    <div class="elfSlot">
+      <div class="bubble" id="bubble1">
+        <div class="want"><span class="wantIcon" id="wantIcon1">🦄</span><span id="wantText1">Rocking Horse</span></div>
+        <div class="timerRing" id="ring1"><span id="secs1">6</span></div>
+      </div>
+      <div class="elf" id="elf1" data-elf="1">
+        <div class="elfBody">
+          <div class="elfArt">
+            <div class="hat" style="transform: rotate(8deg)"></div>
+            <div class="face"></div>
+            <div class="cheek left"></div>
+            <div class="cheek right"></div>
+            <div class="eyes"><div class="eye"></div><div class="eye"></div></div>
+            <div class="smile"></div>
+            <div class="body"></div>
+            <div class="belt"></div>
+            <div class="buckle"></div>
+          </div>
+        </div>
+        <div class="dropHint">Drop present here</div>
+      </div>
+    </div>
+
+    <div class="elfSlot">
+      <div class="bubble" id="bubble2">
+        <div class="want"><span class="wantIcon" id="wantIcon2">🚗</span><span id="wantText2">Toy Car</span></div>
+        <div class="timerRing" id="ring2"><span id="secs2">6</span></div>
+      </div>
+      <div class="elf" id="elf2" data-elf="2">
+        <div class="elfBody">
+          <div class="elfArt">
+            <div class="hat" style="transform: rotate(-16deg)"></div>
+            <div class="face"></div>
+            <div class="cheek left"></div>
+            <div class="cheek right"></div>
+            <div class="eyes"><div class="eye"></div><div class="eye"></div></div>
+            <div class="smile"></div>
+            <div class="body"></div>
+            <div class="belt"></div>
+            <div class="buckle"></div>
+          </div>
+        </div>
+        <div class="dropHint">Drop present here</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- End-of-day modal -->
+  <div class="modal" id="modal">
+    <div class="card">
+      <h2>🎄 New Day! 🎄</h2>
+      <p>Shift ended. The elves are clocking out.</p>
+      <div class="big">Score: <span id="finalScore">0</span> • Cookies left: <span id="finalCookies">5</span>/5</div>
+      <div class="row">
+        <div class="pill" id="bestStreak">Best streak: 0</div>
+        <div class="pill" id="ordersDone">Orders delivered: 0</div>
+      </div>
+      <div style="margin-top:14px;">
+        <button class="btn" id="playAgainBtn" type="button">Start Next Day ▶</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(() => {
+  // ====== CONFIG ======
+  const DAY_SECONDS = 60;
+  const ORDER_SECONDS = 6;          // time allowed per elf order
+  const COOKIE_MAX = 5;
+
+  const toys = [
+    { id: "doll",  name: "Doll",          icon: "🪆" },
+    { id: "horse", name: "Rocking Horse", icon: "🦄" },
+    { id: "car",   name: "Toy Car",       icon: "🚗" }
+  ];
+
+  // ====== STATE ======
+  let score = 0;
+  let cookies = COOKIE_MAX;
+  let dayLeft = DAY_SECONDS;
+  let interval = null;
+  let bestStreak = 0;
+  let streak = 0;
+  let ordersDelivered = 0;
+
+  const elves = [
+    { want: null, left: ORDER_SECONDS },
+    { want: null, left: ORDER_SECONDS },
+    { want: null, left: ORDER_SECONDS }
+  ];
+
+  // ====== DOM ======
+  const $ = (sel) => document.querySelector(sel);
+  const scoreEl = $("#score");
+  const dayEl = $("#dayTime");
+  const modal = $("#modal");
+  const finalScoreEl = $("#finalScore");
+  const finalCookiesEl = $("#finalCookies");
+  const bestStreakEl = $("#bestStreak");
+  const ordersDoneEl = $("#ordersDone");
+
+  const cookieEls = [$("#c1"),$("#c2"),$("#c3"),$("#c4"),$("#c5")];
+
+  // ====== AUDIO (tiny “ding” / “buzz” without external files) ======
+  const audioCtx = (() => {
+    try { return new (window.AudioContext || window.webkitAudioContext)(); }
+    catch { return null; }
+  })();
+
+  function beep({freq=660, dur=0.08, type="sine", gain=0.06} = {}){
+    if(!audioCtx) return;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.value = gain;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start();
+    o.stop(audioCtx.currentTime + dur);
+  }
+  function successSound(){
+    beep({freq:784, dur:0.07, type:"triangle", gain:0.05});
+    setTimeout(()=>beep({freq:988, dur:0.08, type:"triangle", gain:0.05}), 65);
+  }
+  function failSound(){
+    beep({freq:220, dur:0.11, type:"sawtooth", gain:0.04});
+  }
+
+  // ====== SNOW ======
+  const snow = $("#snow");
+  function makeSnow(){
+    snow.innerHTML = "";
+    const count = 36;
+    for(let i=0;i<count;i++){
+      const f = document.createElement("div");
+      f.className = "flake";
+      const left = Math.random()*100;
+      const size = 3 + Math.random()*5;
+      const dur = 6 + Math.random()*9;
+      const delay = Math.random()*6;
+      f.style.left = left + "vw";
+      f.style.width = size + "px";
+      f.style.height = size + "px";
+      f.style.opacity = (0.25 + Math.random()*0.7).toFixed(2);
+      f.style.animationDuration = dur + "s";
+      f.style.animationDelay = (-delay) + "s";
+      snow.appendChild(f);
+    }
+  }
+
+  // ====== ORDERS ======
+  function randomToy(){
+    return toys[Math.floor(Math.random()*toys.length)];
+  }
+
+  function setElfOrder(i, toy){
+    elves[i].want = toy.id;
+    elves[i].left = ORDER_SECONDS;
+
+    $("#wantIcon"+i).textContent = toy.icon;
+    $("#wantText"+i).textContent = toy.name;
+    $("#secs"+i).textContent = ORDER_SECONDS;
+
+    updateRing(i);
+  }
+
+  function updateRing(i){
+    const pct = Math.max(0, Math.min(1, elves[i].left / ORDER_SECONDS));
+    const deg = Math.round(pct * 360);
+    const ring = $("#ring"+i);
+    ring.style.background = `conic-gradient(var(--green) ${deg}deg, rgba(0,0,0,.12) 0deg)`;
+    $("#secs"+i).textContent = Math.ceil(elves[i].left);
+  }
+
+  function loseCookie(){
+    if(cookies <= 0) return;
+    cookies--;
+    streak = 0;
+    failSound();
+    renderCookies();
+  }
+
+  function renderCookies(){
+    cookieEls.forEach((el, idx) => {
+      el.classList.toggle("lost", idx >= cookies);
+    });
+  }
+
+  function flashElf(i, good){
+    const el = $("#elf"+i);
+    el.classList.remove("good","bad");
+    void el.offsetWidth; // restart animation/transition
+    el.classList.add(good ? "good" : "bad");
+    setTimeout(()=> el.classList.remove("good","bad"), 220);
+  }
+
+  // ====== DRAG & DROP ======
+  let draggedToy = null;
+
+  document.querySelectorAll(".item").forEach(item => {
+    item.addEventListener("dragstart", (e) => {
+      draggedToy = item.dataset.toy;
+      e.dataTransfer.setData("text/plain", draggedToy);
+      // helps some browsers show a nicer drag image
+      e.dataTransfer.effectAllowed = "move";
+      if(audioCtx && audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
+    });
+  });
+
+  document.querySelectorAll(".elf").forEach(elf => {
+    elf.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+    });
+    elf.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const toy = e.dataTransfer.getData("text/plain") || draggedToy;
+      const idx = Number(elf.dataset.elf);
+      handleDelivery(idx, toy);
+    });
+  });
+
+  function handleDelivery(elfIndex, toyId){
+    if(!toyId) return;
+    const want = elves[elfIndex].want;
+
+    if(toyId === want){
+      score += 10;
+      ordersDelivered++;
+      streak++;
+      bestStreak = Math.max(bestStreak, streak);
+      successSound();
+      flashElf(elfIndex, true);
+      scoreEl.textContent = score;
+
+      // new order for that elf
+      setElfOrder(elfIndex, randomToy());
+
+      // tiny reward: if you’re doing well, cookies can “recover” a bit
+      // (creative touch: makes it less punishing and more “gamey”)
+      if(streak % 5 === 0 && cookies < COOKIE_MAX){
+        cookies++;
+        renderCookies();
+      }
+    } else {
+      // wrong elf/order
+      streak = 0;
+      failSound();
+      flashElf(elfIndex, false);
+      score = Math.max(0, score - 3);
+      scoreEl.textContent = score;
+    }
+  }
+
+  // ====== GAME LOOP ======
+  function tick(){
+    dayLeft -= 1;
+    dayEl.textContent = Math.max(0, dayLeft);
+
+    // each elf timer counts down
+    for(let i=0;i<3;i++){
+      elves[i].left -= 1;
+      if(elves[i].left <= 0){
+        // time ran out for that elf: cookie rating drops & they change their mind
+        loseCookie();
+        setElfOrder(i, randomToy());
+      } else {
+        updateRing(i);
+      }
+    }
+
+    // end of day
+    if(dayLeft <= 0){
+      endDay();
+    }
+  }
+
+  function startDay(){
+    modal.classList.remove("show");
+    score = 0;
+    cookies = COOKIE_MAX;
+    dayLeft = DAY_SECONDS;
+    streak = 0;
+    bestStreak = 0;
+    ordersDelivered = 0;
+
+    scoreEl.textContent = score;
+    dayEl.textContent = dayLeft;
+    renderCookies();
+
+    // assign initial orders
+    for(let i=0;i<3;i++){
+      setElfOrder(i, randomToy());
+    }
+
+    // start interval
+    clearInterval(interval);
+    interval = setInterval(tick, 1000);
+  }
+
+  function endDay(){
+    clearInterval(interval);
+    interval = null;
+
+    finalScoreEl.textContent = score;
+    finalCookiesEl.textContent = cookies;
+    bestStreakEl.textContent = "Best streak: " + bestStreak;
+    ordersDoneEl.textContent = "Orders delivered: " + ordersDelivered;
+
+    modal.classList.add("show");
+  }
+
+  // ====== BUTTONS ======
+  $("#restartBtn").addEventListener("click", () => startDay());
+  $("#playAgainBtn").addEventListener("click", () => startDay());
+
+  // ====== INIT ======
+  makeSnow();
+  startDay();
+})();
+</script>
+</body>
+</html>
